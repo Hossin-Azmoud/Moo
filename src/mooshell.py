@@ -2,7 +2,7 @@ from sys import (platform, path, exit)
 from os import (rmdir, chdir, mkdir, getcwd, path, scandir, removedirs,
 remove, rename, stat_result, system, walk, getenv, name)
 from shutil import move, copy
-from Moocolors import *
+from UI import UIColors, UIDocs, GetShellInput
 from datetime import date
 from time import sleep
 from subprocess import check_output
@@ -11,30 +11,9 @@ from Variables import *
 from requests import get
 from utility import dumptofile, getContent, getHeaders
 from database import *
-
-DOC = f"""{YELLOW}
-----------------------------------------------------------------------------------
-########################################################################
-----------------------------------------------------------------------------------
-basic Commands: 
-    
-    mkdir => make folders and directories
-    touch => make files
-    cd => navigate
-    ls => list file/dirs
-    rmdir => remove a dir
-    cat => check the content of a file
-    quit/exit => exits.
-    scan => scan for the existence of a file.
-    
-    you can run:
-    {MAGENTA} commandName --help
-    for more information
-------------------------------------------------------------------------------------
-{WHITE} language: {BLUE} Python 3.9  
-"""
-
+from Functionality import OS
 # USERPROFILE = getenv("USERPROFILE")
+
 if name == "posix":
     HOME = "/mnt"
     ROOT = HOME + "/Moo"
@@ -42,51 +21,83 @@ else:
     HOME = getenv("HOMEPATH")
     ROOT = HOME + "\\Moo"
 
-class __installer:
-    def __init__(self):
-        if not path.exists(HOME):
-            mkdir(HOME)
-            cwd = getcwd()
-            move(cwd, HOME)
-            print(f"""
-{GREEN}=> successfully Installed in {HOME}
-{LIGHTMAGENTA_EX}=> Now you can try to add to PATH so you can access the shell from wherever you want!
-                """)
-        else:
-            cwd = getcwd()
-            move(cwd, HOME)
-            print(f"""
-{GREEN}=> successfully Installed in {HOME}
-{LIGHTMAGENTA_EX}=> Now you can try to add to PATH so you can access the shell from wherever you want!
-                """)
+# INTRO: str = DOC
+# COMMANDS: str = availableCommands
+# CD_DOC = cdDoc
+# TOUCH_DOC = touchDoc
+# SCRAP_DOC = scanDoc
+# CAT_DOC = catDoc
+# SCAN_DOC = scanDoc
+# MKDIR_DOC = mkDoc
+# MV_DOC = mvDoc
+# RM_DOC = Rmdoc
+# FONT_DOWNLOADER_DOC = FontdownloaderDoc
+# ORG_DOC = ORGdoc
 
+NOT_EMP = (lambda : print("THIS COMMAND is {!NOT_EMPLEMENTED} BUT M STILL WORKING ON IT!"))
 
 class mooShell:
 
     def __init__(self):
-        print(DOC)
+        self.InitShell()
+        print(self.UIDocs.INTRO)
+
+    def setEnvAttributes(self):
+        self.UIDocs = UIDocs
+        self.osF = OS(self)
+
+        self.PMap = {
+            "CD": self.osF.cd,
+            "DIR": self.osF.ls,
+            "LS": self.osF.ls,
+            "ORGANIZE": self.organize,
+            "MKDIR": self.osF.mkdir,
+            "RMDIR": self.osF.rmdir,
+            "RM": self.osF.rm,
+            "TOUCH": self.osF.touch,
+            "SCAN": NOT_EMP,
+            "MV": self.osF.mv,
+            "CAT": self.osF.cat,
+            "EXIT": self.quit
+        }
+
+        self.PRIMARY = UIColors.BLUE
+        self.SECANDARY = UIColors.WHITE
+        self.YELLOW = UIColors.YELLOW
+        self.ERR = UIColors.RED
+        self.SUC = UIColors.GREEN
+        self.RUN = True
+
+    def LogError(self, msg) -> None: print(f'{self.ERR} {msg}')
+    def LogInfo(self, msg) -> None: print(f'{self.SECANDARY} {msg}')
+    def LogSuccess(self, msg) -> None: print(f'{self.SUC} {msg}')
+    
+    def InitShell(self):
         
         if not self.exist(ROOT):
             mkdir(ROOT)
-            self.changedir(ROOT)
-        else:
-            self.changedir(ROOT)
-        self.PRIMARY = BLUE
-        self.SECANDARY = WHITE
-        self.YELLOW = YELLOW
-        self.ERR = RED
-        self.RUN = True
-        
+        self.setEnvAttributes()
+        self.PMap["CD"](ROOT)
+
     def run(self):
         """ THE ENTRY POINT FOR THE PROGRAM. """
         while self.RUN:
             try:
-                self.dir = getcwd()
-                self.prompt = input(f'{GREEN}[MOO] {self.YELLOW} {self.dir} => ' + self.SECANDARY)
-                self.processArgs()
+                self.cwd = getcwd()
+                self.program = GetShellInput(self.cwd)
+                self.processProgram()
             
             except Exception as e:
                 print(f"{self.ERR} some went bad!! :(", e) 
+
+    def processProgram(self):
+        PName = self.program.ProgramName.upper()
+        if PName:
+            if PName in self.PMap:
+                code = self.PMap[PName]
+                self.program.ExecuteProgram(code)
+            else:
+                print("UNKNOWN COMMAND! ")
 
     def processArgs(self):
         
@@ -97,10 +108,12 @@ class mooShell:
                 self.ls()
             elif self.promp == "HELP":
                 print(HELP)
+            
             elif self.promp == "CD":
                 print()
-                print(self.dir)
+                print(self.cwd)
                 print()
+
             elif self.promp == "FONTD":
                 print(FontdownloaderDoc)
             elif self.promp == "QUIT" or self.promp == "EXIT":
@@ -133,7 +146,6 @@ class mooShell:
 
         elif len(self.prompt.split(' ')) > 1:
             self.prompt = self.prompt.split(' ')
-
             if self.prompt[0].strip().upper() == "CD":
                 self.changedir(self.prompt[1])
 
@@ -204,7 +216,7 @@ class mooShell:
                     self.cat()
 
             elif self.prompt[0].strip().upper() == "LS" or self.prompt[0].strip().upper() == "DIR":
-                self.dir = self.prompt[1]
+                self.cwd = self.prompt[1]
                 self.ls()
             elif self.prompt[0].strip().upper() == "HELP":
                 print()
@@ -230,43 +242,44 @@ class mooShell:
                 self.setArgs()
                 self.Cmd()
     
-
-    def setArgs(self):
-        self.args = ' '.join(self.prompt[0:])
+    def setArgs(self): self.args = ' '.join(self.prompt[0:])
     
-    def ORG(self, path_):
+    def organize(self, *arg):
+        path_ = arg[0]
+        
         if path_.strip().upper() == "--HELP":
-            print(ORGdoc)
-        else:
-            if not self.exist(path_):
-                print("the path does not exist.")
+            print(UIDocs.ORG_DOC)
+            return
+        
+        if not self.exist(path_):
+            print("the path does not exist.")
+            return
+        
+        for i in scandir(path_):
+            if str(i.name).split('.')[1] in ["py", "ps", "bash", "yaml", "html", "c", "cpp", "c++", "r", "rb", "js", "css", "scss", "json", "tsx", "c#", "java"]:
+                self.move_(path_, i, "code")
+
+            elif str(i.name).split('.')[1] in ["mp3", "m4a", "wav"]:
+                self.move_(path_, i, "Audio")
+            
+            elif str(i.name).split('.')[1] in ["docx", "pdf", "ai", "fig", "psd", "xd"]:
+                self.move_(path_, i, "Docs")
+
+            elif str(i.name).split('.')[1] in ["mp4", "webm", "mkv"]:
+                self.move_(path_, i, "videos")
+
+            elif str(i.name).split('.')[1] in ["gif", "jpeg", "png", "svg"]:
+                self.move_(path_, i, "pictures")
+
+            elif str(i.name).split('.')[1] in ["exe", "", "msi"]:
+                self.move_(path_, i, "Programs")
+
+            elif str(i.name).split('.')[1] == "iso":
+                self.move_(path_, i, "ISO")
+
             else:
-                for i in scandir(path_):
-                    if str(i.name).split('.')[1] in ["py", "ps", "bash", "yaml", "html", "c", "cpp", "c++", "r", "rb", "js", "css", "scss", "json", "tsx", "c#", "java"]:
-                        self.move_(path_, i, "code")
-
-                    elif str(i.name).split('.')[1] in ["mp3", "m4a", "wav"]:
-                        self.move_(path_, i, "Audio")
-                    
-                    elif str(i.name).split('.')[1] in ["docx", "pdf", "ai", "fig", "psd", "xd"]:
-                        self.move_(path_, i, "Docs")
-
-                    elif str(i.name).split('.')[1] in ["mp4", "webm", "mkv"]:
-                        self.move_(path_, i, "videos")
-
-                    elif str(i.name).split('.')[1] in ["gif", "jpeg", "png", "svg"]:
-                        self.move_(path_, i, "pictures")
-
-                    elif str(i.name).split('.')[1] in ["exe", "", "msi"]:
-                        self.move_(path_, i, "Programs")
-
-                    elif str(i.name).split('.')[1] == "iso":
-                        self.move_(path_, i, "ISO")
-
-                    else:
-                        self.move_(path_, i, "other")
-                print(f"{GREEN}Completed!!")
-
+                self.move_(path_, i, "other")
+        print(f"{GREEN}Completed!!")
 
     def move_(self, path_, file, folderName):
         """this function checks if the folder does not exist this is why I did not use the other one
@@ -275,19 +288,6 @@ class mooShell:
         if not self.exist(path.join(path_, folderName)):
             mkdir(path.join(path_, folderName))
         self.mv(file.name, path.join(path_, folderName))
-
-    def rm(self, file: Union[str, list]) -> None:
-        if isinstance(file, str):
-            if self.exist(file):
-                try:
-                    remove(file)
-                except:
-                    system(f"del {file}")
-            else:
-                print(f"{self.ERR} the file specified to be deleted does not exist!!")
-        else:
-            for _ in file:
-                self.rm(_)
 
     def donwloadFont(self):
         fontName = self.prompt[1].strip()
@@ -411,53 +411,15 @@ File name: {Fore.LIGHTYELLOW_EX}{fontName}.zip
         else:
             print(doc)
 
-    def ls(self):
-        print()
-        for _ in scandir(self.dir):
-                print(self.PRIMARY + '  [*]  ' + self.SECANDARY + _.name)
-        print()
-
-    def changedir(self, d):
-        
-        if d == '--help':
-            print(cdDoc)
-        else:
-            if self.exist(d):
-                chdir(f"{d}")
-            else:
-                print(f'{self.SECANDARY} it seems like it does not exist!')
-
-    def touch(self, name):
-        if name == '--help' or name == '-h':
-            print(touchDoc)
-        else:
-            if isinstance(name, list):
-                for _ in name:
-                    self.touch(_)
-            else:
-                return open(name, 'w+').close()
     def scan(self, ext):
-        out = [i.name for i in scandir(self.dir) if i.name.endswith(ext)]
+        out = [i.name for i in scandir(self.cwd) if i.name.endswith(ext)]
         if len(out) > 0:
             for _ in out:
                 print(f"{GREEN} ==> {_}")
         else:
             print("there is no files for the specified extention!")
         return out
-    def mv(self, src, dist):
-        if isinstance(src, str):
-            if self.exist(src):
-                if not self.exist(dist):
-                    self.mkdir(dist)
-                try:
-                    move(src, dist)
-                except:
-                    system(f"move {src} {dist}")
-            else:
-                print(f"{self.ERR} the file specified to be moved does not exist!!")
-        else:
-            for _ in src:
-                self.mv(_, dist)
+    
     def cp(self, files=None):
         if files == None:
             print(f"{CYAN} description:\n {WHITE} A command to copy files \n {CYAN} Usage:\n {WHITE}cp <filepath> <destinationpath>")
@@ -473,6 +435,7 @@ File name: {Fore.LIGHTYELLOW_EX}{fontName}.zip
                 print(f'{GREEN} copied one file!!')
             except:
                 system(f"copy {files[0]} {files[1]}")
+
     def scrap(self, url, args=[]):
         if not "http" in url.split(":"):
             url = "http://" + url
@@ -641,8 +604,6 @@ File name: {Fore.LIGHTYELLOW_EX}{fontName}.zip
             else:
                 print(f"{method} is not a valid switch, either use > to append or >> to overwrite") 
 
-    
-
     def appendToFile(self, fileName, content):
         with open(fileName, "a+") as f:
             if isinstance(content, bytes):
@@ -658,9 +619,11 @@ File name: {Fore.LIGHTYELLOW_EX}{fontName}.zip
                 f.write(str(content))
 
     def quit(self):
+        
         for i in ['-','\\' , '|', '/']*2:
-            print(f'{LIGHTBLACK_EX} quiting {i}', end="\r")
+            print(f'{UIColors.LIGHTBLACK_EX} quiting {i}', end="\r")
             sleep(.3)
+
         self.RUN = False
 
 

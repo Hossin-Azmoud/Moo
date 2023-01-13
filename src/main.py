@@ -1,11 +1,10 @@
-
 from mooshell import mooShell
-from Moocolors import WHITE
+from UI import UIColors
 
 def main():
 	shell = mooShell()
 	shell.run()
-	print(WHITE)
+	print(UIColors.WHITE)
 
 if __name__ == '__main__':
 	main()
