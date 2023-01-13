@@ -10,10 +10,11 @@
 ## Tools
 
 - This section is still under developement, please wait untill I optimize and rewrite the code. it is totally garbage at the moment.
+- You can perform basic os commands, like rmdir, mkdir, cd, ls/dir..
+
 
 ## To Do
-
     - [] rewrite the garbage code...
-    - [] restructure the project...
+    - [*] restructure the project...
     - [] document the project in this README...
     - [] remove what is important and leave what is irrelevent..
