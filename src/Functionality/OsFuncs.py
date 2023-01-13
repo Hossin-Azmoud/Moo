@@ -1,6 +1,7 @@
 
 from os import (rmdir, chdir, mkdir, getcwd, path, scandir, removedirs,
 remove, rename, stat_result, system, walk, getenv, name)
+from subprocess import check_output
 
 class OS:
 
@@ -172,19 +173,31 @@ class OS:
 			return
 
 	def cp(self, *arg):
-    
+		
+		if files == None:
+			print(f"{CYAN} description:\n {WHITE} A command to copy files \n {CYAN} Usage:\n {WHITE}cp <filepath> <destinationpath>")
+ 
+		elif len(files) < 2:
+			print(f"{RED} something was not specified\n {YELLOW}check if you specified both the file and destination")
+		elif len(files) > 2:
+			for _ in files[:-1]:
+				self.cp([_, files[-1]])
+			print(f'{GREEN} copied {len(files)} files!!')
+		else:
+			try:
+				copy(files[0], files[1])
+				print(f'{GREEN} copied one file!!')
+			except:
+				system(f"copy {files[0]} {files[1]}")
 
-        if files == None:
-            print(f"{CYAN} description:\n {WHITE} A command to copy files \n {CYAN} Usage:\n {WHITE}cp <filepath> <destinationpath>")
-        elif len(files) < 2:
-            print(f"{RED} something was not specified\n {YELLOW}check if you specified both the file and destination")
-        elif len(files) > 2:
-            for _ in files[:-1]:
-                self.cp([_, files[-1]])
-            print(f'{GREEN} copied {len(files)} files!!')
-        else:
-            try:
-                copy(files[0], files[1])
-                print(f'{GREEN} copied one file!!')
-            except:
-                system(f"copy {files[0]} {files[1]}")
+	def ExecuteSysCommand(self, Program):
+		""" If some command is not yet available in this class, it will reach out to syscommands"""
+		# Argc: int
+		# Argv: list[str]
+		# ProgramName: str
+		if Program.Argc >= 1:
+			try: self.interface.LogInfo(check_output([Program.ProgramName, *Program.Argv], shell=True).decode("utf-8"))
+			except Exception as e: self.interface.LogError(e)
+
+
+

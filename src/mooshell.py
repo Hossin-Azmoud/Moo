@@ -5,7 +5,6 @@ from shutil import move, copy
 from UI import UIColors, UIDocs, GetShellInput
 from datetime import date
 from time import sleep
-from subprocess import check_output
 from typing import Union
 from Variables import *
 from requests import get
@@ -34,7 +33,9 @@ else:
 # FONT_DOWNLOADER_DOC = FontdownloaderDoc
 # ORG_DOC = ORGdoc
 
-NOT_EMP = (lambda : print("THIS COMMAND is {!NOT_EMPLEMENTED} BUT M STILL WORKING ON IT!"))
+NOT_EMP = (
+    lambda : print("THIS COMMAND is {!NOT_EMPLEMENTED} BUT M STILL WORKING ON IT!")
+)
 
 class mooShell:
 
@@ -74,7 +75,7 @@ class mooShell:
     
     def InitShell(self):
         
-        if not self.exist(ROOT):
+        if not path.exists(ROOT):
             mkdir(ROOT)
         self.setEnvAttributes()
         self.PMap["CD"](ROOT)
@@ -96,8 +97,9 @@ class mooShell:
             if PName in self.PMap:
                 code = self.PMap[PName]
                 self.program.ExecuteProgram(code)
-            else:
-                print("UNKNOWN COMMAND! ")
+                return
+
+            self.osF.ExecuteSysCommand(self.program)
 
     def processArgs(self):
         
@@ -420,22 +422,7 @@ File name: {Fore.LIGHTYELLOW_EX}{fontName}.zip
             print("there is no files for the specified extention!")
         return out
     
-    def cp(self, files=None):
-        if files == None:
-            print(f"{CYAN} description:\n {WHITE} A command to copy files \n {CYAN} Usage:\n {WHITE}cp <filepath> <destinationpath>")
-        elif len(files) < 2:
-            print(f"{RED} something was not specified\n {YELLOW}check if you specified both the file and destination")
-        elif len(files) > 2:
-            for _ in files[:-1]:
-                self.cp([_, files[-1]])
-            print(f'{GREEN} copied {len(files)} files!!')
-        else:
-            try:
-                copy(files[0], files[1])
-                print(f'{GREEN} copied one file!!')
-            except:
-                system(f"copy {files[0]} {files[1]}")
-
+    
     def scrap(self, url, args=[]):
         if not "http" in url.split(":"):
             url = "http://" + url
@@ -518,81 +505,9 @@ File name: {Fore.LIGHTYELLOW_EX}{fontName}.zip
                 if redirect:
                     dumptofile(redirect, re0)
 
-    def Cmd(self):
-        try:
-            if platform == "win32":
-                if self.args is not None:
-                    print(check_output(self.args, shell=True).decode("utf-8"))
-                else:
-                    print(check_output(self.prompt.strip(), shell=True).decode("utf-8"))
-            else:
-                if self.args is not None:
-                    string = " ".join(self.args)
-                    print(check_output(f"python3 {string}", shell=True).decode("utf-8"))
-                else:
-                    print(check_output(self.prompt.strip(), shell=True).decode("utf-8"))
-        except Exception as e:
-            print(e)
 
-    def unzip(self):
-        pass
+    def scandrive(self, name): pass
 
-    def mim(self, filename):
-        print(f"{self.PRIMARY} to quit and save type /|/")
-        self.lineNum = 1
-        input_ = ""
-        temp = ""
-        if self.exist(filename):
-            for _ in open(filename).readlines():
-                _ = _.replace("\n", "")
-                print(f" {CYAN}{self.lineNum}  {self.YELLOW}{_}")
-                self.lineNum += 1
-        while input_ != "/|/":  
-            input_ = input(f"{CYAN}{self.lineNum}{self.YELLOW} ")
-            if input_ != "/|/":
-                if self.exist(filename):
-                    with open(filename, 'a') as f:
-                        f.write(f"{input_}\n")
-                else:
-                    with open(filename, 'w') as f:
-                        f.write(f"{input_}\n")
-            self.lineNum += 1
-
-    def cat(self):
-        if self.exist(self.prompt.split(' ')[1]):
-            if len(self.prompt.split(' ')) > 2:
-                if not self.exist(self.prompt.split(' ')[3]):
-                    self.touch(self.prompt.split(' ')[3])
-                if self.prompt.split(' ')[2] == ">>":
-                    with open(self.prompt.split(' ')[1]) as f:
-                        with open(self.prompt.split(' ')[3], 'w+') as f2:
-                            f2.write(f.read())
-                            print(f"{self.prompt.split(' ')[1]} > {self.prompt.split(' ')[3]}")
-                            return
-                elif self.prompt.split(' ')[2] == ">":
-                    with open(self.prompt.split(' ')[1]) as f:
-                        with open(self.prompt.split(' ')[3], 'a') as f2:
-                            f2.write(f.read())
-                            print(f"{self.prompt.split(' ')[1]} > {self.prompt.split(' ')[3]}")
-                            return
-            else:
-                with open(self.prompt.split(' ')[1]) as f:
-                    print(f.read())
-        else:
-            print(f"{self.ERR} this file you specified does not exist")
-    
-    def scandrive(self, name):
-        pass
-
-    def exist(self, p):
-        if p in ["..", '.']:
-            return True
-        else:
-            try:
-                return path.exists(p)
-            except:
-                return False
-    
     def redirectOutput(self, content, method=None, fileName=None):
         if not method:
             method = ">"
