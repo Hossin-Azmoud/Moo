@@ -3,6 +3,8 @@ from os import (rmdir, chdir, mkdir, getcwd, path, scandir, removedirs,
 remove, rename, stat_result, system, walk, getenv, name)
 from shutil import move, copy
 from UI import UIColors, UIDocs, GetShellInput
+from Net import NetToolClass
+from pprint import pprint
 from datetime import date
 from time import sleep
 from typing import Union
@@ -45,20 +47,22 @@ class mooShell:
 
     def setEnvAttributes(self):
         self.UIDocs = UIDocs
-        self.osF = OS(self)
+        self.osClass = OS(self)
+        self.neTools = NetToolClass(self)
 
         self.PMap = {
-            "CD": self.osF.cd,
-            "DIR": self.osF.ls,
-            "LS": self.osF.ls,
-            "ORGANIZE": self.organize,
-            "MKDIR": self.osF.mkdir,
-            "RMDIR": self.osF.rmdir,
-            "RM": self.osF.rm,
-            "TOUCH": self.osF.touch,
+            "CD": self.osClass.cd,
+            "DIR": self.osClass.ls,
+            "LS": self.osClass.ls,
+            "ORGANIZE": self.osClass.organize,
+            "MKDIR": self.osClass.mkdir,
+            "RMDIR": self.osClass.rmdir,
+            "RM": self.osClass.rm,
+            "TOUCH": self.osClass.touch,
             "SCAN": NOT_EMP,
-            "MV": self.osF.mv,
-            "CAT": self.osF.cat,
+            "MV": self.osClass.mv,
+            "CAT": self.osClass.cat,
+            "NET": self.neTools.NetExec,
             "EXIT": self.quit
         }
 
@@ -69,22 +73,37 @@ class mooShell:
         self.SUC = UIColors.GREEN
         self.RUN = True
 
-    def LogError(self, msg) -> None: print(f'{self.ERR} {msg}')
-    def LogInfo(self, msg) -> None: print(f'{self.SECANDARY} {msg}')
-    def LogSuccess(self, msg) -> None: print(f'{self.SUC} {msg}')
-    
+    def SetCwd(self, new: str) -> None:
+        self.cwd = new
+
+    def LogDict(self, data: dict) -> None:
+        for i, k in enumerate(data):
+            if k == "content":
+                print(f"{UIColors.LIGHTYELLOW_EX}[{i}]-------------------------------- {self.SUC}{k} ----------------------------------------------")
+                print(f'{UIColors.LIGHTYELLOW_EX}{data[k]}')
+                
+            else:
+                print(f"{UIColors.LIGHTYELLOW_EX}[{i}] {self.SUC}{k}{self.SECANDARY}: {UIColors.LIGHTYELLOW_EX}{data[k]}")
+
+
+    def LogError(self, *arg, **kwargs) -> None:
+        print(self.ERR, *arg, **kwargs)
+    def LogInfo(self, *arg, **kwargs) -> None:
+        print(self.SECANDARY, *arg, **kwargs)
+    def LogSuccess(self, *arg, **kwargs) -> None:
+        print(self.SUC, *arg, **kwargs)
+
     def InitShell(self):
-        
         if not path.exists(ROOT):
             mkdir(ROOT)
         self.setEnvAttributes()
         self.PMap["CD"](ROOT)
+        self.SetCwd(ROOT)
 
     def run(self):
         """ THE ENTRY POINT FOR THE PROGRAM. """
         while self.RUN:
             try:
-                self.cwd = getcwd()
                 self.program = GetShellInput(self.cwd)
                 self.processProgram()
             
@@ -99,7 +118,7 @@ class mooShell:
                 self.program.ExecuteProgram(code)
                 return
 
-            self.osF.ExecuteSysCommand(self.program)
+            self.osClass.ExecuteSysCommand(self.program)
 
     def processArgs(self):
         
@@ -246,51 +265,8 @@ class mooShell:
     
     def setArgs(self): self.args = ' '.join(self.prompt[0:])
     
-    def organize(self, *arg):
-        path_ = arg[0]
-        
-        if path_.strip().upper() == "--HELP":
-            print(UIDocs.ORG_DOC)
-            return
-        
-        if not self.exist(path_):
-            print("the path does not exist.")
-            return
-        
-        for i in scandir(path_):
-            if str(i.name).split('.')[1] in ["py", "ps", "bash", "yaml", "html", "c", "cpp", "c++", "r", "rb", "js", "css", "scss", "json", "tsx", "c#", "java"]:
-                self.move_(path_, i, "code")
-
-            elif str(i.name).split('.')[1] in ["mp3", "m4a", "wav"]:
-                self.move_(path_, i, "Audio")
-            
-            elif str(i.name).split('.')[1] in ["docx", "pdf", "ai", "fig", "psd", "xd"]:
-                self.move_(path_, i, "Docs")
-
-            elif str(i.name).split('.')[1] in ["mp4", "webm", "mkv"]:
-                self.move_(path_, i, "videos")
-
-            elif str(i.name).split('.')[1] in ["gif", "jpeg", "png", "svg"]:
-                self.move_(path_, i, "pictures")
-
-            elif str(i.name).split('.')[1] in ["exe", "", "msi"]:
-                self.move_(path_, i, "Programs")
-
-            elif str(i.name).split('.')[1] == "iso":
-                self.move_(path_, i, "ISO")
-
-            else:
-                self.move_(path_, i, "other")
-        print(f"{GREEN}Completed!!")
-
-    def move_(self, path_, file, folderName):
-        """this function checks if the folder does not exist this is why I did not use the other one
-            shutil.move().
-        """
-        if not self.exist(path.join(path_, folderName)):
-            mkdir(path.join(path_, folderName))
-        self.mv(file.name, path.join(path_, folderName))
-
+    
+    
     def donwloadFont(self):
         fontName = self.prompt[1].strip()
         if fontName != '--help':

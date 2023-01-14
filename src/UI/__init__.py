@@ -12,4 +12,4 @@ from .program import constructNewProgram, Program
 def GetShellInput(Current_directory: str) -> Program:
 	""" Entry point for the shell UI """
 	i = input(f'{ UIColors.GREEN }[MOO] { UIColors.YELLOW } { Current_directory } => { UIColors.WHITE }')
-	return constructNewProgram(i.strip().split(' '))
+	return constructNewProgram(i)

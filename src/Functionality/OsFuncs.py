@@ -1,7 +1,7 @@
 
 from os import (rmdir, chdir, mkdir, getcwd, path, scandir, removedirs,
 remove, rename, stat_result, system, walk, getenv, name)
-from subprocess import check_output
+from subprocess import check_output, run, PIPE, Popen
 
 class OS:
 
@@ -20,7 +20,7 @@ class OS:
 
 		if path.exists(directoryName):
 			chdir(f"{directoryName}")
-			self.interface.cwd = directoryName
+			self.interface.SetCwd(getcwd())
 			return
 
 		self.interface.LogError("it seems like it does not exist!")
@@ -36,7 +36,10 @@ class OS:
 			directoryName = arg[0]
 
 		for dirObj in scandir(directoryName):
-			print( self.interface.PRIMARY + '  [*]  ' + self.interface.SECANDARY + dirObj.name )
+			if dirObj.is_file():
+				self.interface.LogInfo(self.interface.SUC + ' [.]  ' + self.interface.SECANDARY + dirObj.name + " | " + str(dirObj.stat().st_size) + " byte")
+			else:
+				self.interface.LogInfo(self.interface.PRIMARY + ' [*]  ' + self.interface.SECANDARY + dirObj.name )
 
 		print()
 
@@ -192,12 +195,59 @@ class OS:
 
 	def ExecuteSysCommand(self, Program):
 		""" If some command is not yet available in this class, it will reach out to syscommands"""
+		"""  TODO: This command manager can not pipe the execution flow to another external shell! which is annoying ! """
 		# Argc: int
 		# Argv: list[str]
 		# ProgramName: str
+		
+		command = [
+			Program.ProgramName, *Program.Argv
+		]
+
 		if Program.Argc >= 1:
-			try: self.interface.LogInfo(check_output([Program.ProgramName, *Program.Argv], shell=True).decode("utf-8"))
-			except Exception as e: self.interface.LogError(e)
+			# self.interface.LogInfo(f"running command {command}")
+
+			p = run(
+				command, 
+				shell=True,
+				stdout=PIPE,
+				stdin=PIPE,
+				encoding="utf-8"
+			)
+
+			# while pipe.returncode is None: 
+			# 	pipe.poll()
+			self.interface.LogInfo(p.stdin)
+	def organize(self, *arg):
+		
+		if len(arg) > 0:
+			path_ = arg[0]
+			if path_.strip().upper() == "--HELP":
+				print(self.interface.UIDocs.ORG_DOC)
+				return
+			
+			if not path.exists(path_):
+				print("the path does not exist.")
+				return
+			
+			for i in scandir(path_):
+				sp = str(i.name).split('.')
+				if len(sp) > 1:
+					if sp[len(sp) - 1] in ["rs", "go", "py", "ps", "bash", "yaml", "html", "c", "cpp", "c++", "r", "rb", "js", "css", "scss", "json", "tsx", "c#", "java", "rs"]: self.mv(i.path, "code")
+					elif sp[len(sp) - 1] in ["mp3", "m4a", "wav"]: self.mv(i.path, "Audio")
+					elif sp[len(sp) - 1] == "txt": self.mv(i.path, "text_files")
+					elif sp[len(sp) - 1] in ["docx", "pdf", "ai", "fig", "psd", "xd"]: self.mv(i.path, "Docs")
+					elif sp[len(sp) - 1] in ["mp4", "webm", "mkv"]: self.mv(i.path, "videos")
+					elif sp[len(sp) - 1] in ["gif", "jpeg", "png", "svg"]: self.mv(i.path, "pictures")
+					elif sp[len(sp) - 1] in ["exe", "", "msi"]: self.mv(i.path, "Programs")
+					elif sp[len(sp) - 1] == "iso": self.mv(i.path, "ISO")
+					else: self.mv(i.path, "other")
+				else:
+					if i.is_file(): 
+						self.mv(i.path, "other")
+
+			self.interface.LogSuccess("Completed!!")
+
 
 
 
