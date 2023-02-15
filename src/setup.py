@@ -1,10 +1,10 @@
 from os import system
 
 MODULES = [
-"colorama",
-"requests",
-"pafy",
-"youtube-dl"
+	"colorama",
+	"requests",
+	"pafy",
+	"youtube-dl"
 ]
 
 

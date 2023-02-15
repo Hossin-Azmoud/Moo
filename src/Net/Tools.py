@@ -21,6 +21,7 @@ class NetToolClass:
 
 	def NetGet(self, *args, **kwargs):
 		res = get(args[0], **kwargs)	
+		
 		data = {
 			"code": res.status_code,
 			**res.headers

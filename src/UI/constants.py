@@ -1,5 +1,23 @@
 from colorama import Fore
 
+
+# CRPT_DOC = f"""{f.YELLOW}
+
+#     Author: Hossin azmoud (Moody0101)
+#     Date: 10/18/2022
+#     LICENCE: MIT
+#     Language: {f.CYAN}Python3.10 {f.YELLOW}
+#     Descripion: A tool to hash, encode, decode text.
+#     command: hash, encode, decode, help, exit
+#     Usage: 
+#         To encode/Decode:
+#             Encode/Decode <Text> <Algorithm>
+#             Encode/Decode only for help.
+#         To hash:
+#             Hash <Text> <Algorithm>
+#             Hash only for help.
+# """
+
 DOC = f"""{Fore.YELLOW}
 ----------------------------------------------------------------------------------
 ########################################################################

@@ -2,6 +2,7 @@
 from os import (rmdir, chdir, mkdir, getcwd, path, scandir, removedirs,
 remove, rename, stat_result, system, walk, getenv, name)
 from subprocess import check_output, run, PIPE, Popen
+from shutil import move, copy
 
 class OS:
 
@@ -12,7 +13,8 @@ class OS:
 		
 		directoryName = getcwd()
 		
-		if len(arg) > 0: directoryName = arg[0]
+		if len(arg) > 0: 
+			directoryName = arg[0]
 
 		if directoryName == '--help':
 			print(self.interface.UIDocs.CD_DOC)
@@ -24,7 +26,6 @@ class OS:
 			return
 
 		self.interface.LogError("it seems like it does not exist!")
-
 	def ls(self, *arg):
 		""" List The current or passed directory.. """
 		
@@ -42,7 +43,6 @@ class OS:
 				self.interface.LogInfo(self.interface.PRIMARY + ' [*]  ' + self.interface.SECANDARY + dirObj.name )
 
 		print()
-
 	def mv(self, *arg):
 		""" Move a file or a directory from src to a certain dist """
 		argc = len(arg)
@@ -66,7 +66,6 @@ class OS:
 					system(f"move {src} {dist}")
 			else:
 				self.interface.LogError("the file specified to be moved does not exist!!")
-
 	def rm(self, *arg):
 		""" remove file/files """
 		if len(arg) >= 1:
@@ -88,7 +87,6 @@ class OS:
 
 			for file in arg:
 				self.rm(file)
-
 	def mkdir(self, *arg):
 		""" make a new directory/multiple directories... """
 		if len(arg) >= 1:
@@ -100,7 +98,6 @@ class OS:
 			for i in arg: 
 				self.mkdir(i)
 			return
-
 	def rmdir(self, *arg):
 		""" remove the passed dir name. """
 		if len(arg) >= 1:
@@ -131,7 +128,6 @@ class OS:
 				else:
 					self.interface.LogError(f"Directory NOT FOUND !\n {i}")
 			return
-	
 	def touch(self, *arg):
 		""" create new file/files. """
 		
@@ -155,7 +151,6 @@ class OS:
 			elif len(arg) > 1:
 				for i in arg:
 					self.touch(i)
-	
 	def cat(self, *arg):
 		""" display the content of a file. """
 		if len(arg) >= 1:
@@ -174,25 +169,23 @@ class OS:
 
 			self.interface.LogError(f"IT IS  NOT A VALID FILENAME: {file}")
 			return
-
 	def cp(self, *arg):
+		argc = len(arg)
 		
-		if files == None:
+		if argc < 2 or arg[0] == "--help":
 			print(f"{CYAN} description:\n {WHITE} A command to copy files \n {CYAN} Usage:\n {WHITE}cp <filepath> <destinationpath>")
- 
-		elif len(files) < 2:
-			print(f"{RED} something was not specified\n {YELLOW}check if you specified both the file and destination")
-		elif len(files) > 2:
-			for _ in files[:-1]:
-				self.cp([_, files[-1]])
-			print(f'{GREEN} copied {len(files)} files!!')
-		else:
-			try:
-				copy(files[0], files[1])
-				print(f'{GREEN} copied one file!!')
-			except:
-				system(f"copy {files[0]} {files[1]}")
+			return
+		src, dist = arg[0], arg[1]
 
+		if path.exists(src):
+			
+			if not path.exists(dist):
+				self.mkdir(dist)
+			try: copy(src, dist)
+			
+			except: system(f"copy {src} {dist}")
+		else:
+			self.interface.LogError("the file specified to be moved does not exist!!")
 	def ExecuteSysCommand(self, Program):
 		""" If some command is not yet available in this class, it will reach out to syscommands"""
 		"""  TODO: This command manager can not pipe the execution flow to another external shell! which is annoying ! """
@@ -247,7 +240,25 @@ class OS:
 						self.mv(i.path, "other")
 
 			self.interface.LogSuccess("Completed!!")
+	
+	def scan(self, *arg):
+		
+		
+		if len(arg) < 1:
+			self.interface.Log(self.interface.UIDocs.SCAN_DOC)
 
+		else:
+			
+			directoryName = arg[0]
+			if path.exists(directoryName):
+				out = [
+					i.name for i in scandir(directoryName) 
+					if i.name.endswith(s) 
+					or s in i.name
+				]
 
-
-
+				if len(out) > 0:
+					for entry in out:
+						print(f"{GREEN} ==> { entry }")
+				else:
+					print("None found!")

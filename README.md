@@ -1,4 +1,7 @@
 # An interactive Shell made using python.
+## Description
+- A Shell with a bunch of tools, I made it for learning.
+
 ## Quick start
 - In order for this shell to work, download `Python version 3.9`.
 ```bash
@@ -12,9 +15,8 @@
 - This section is still under developement, please wait untill I optimize and rewrite the code. it is totally garbage at the moment.
 - You can perform basic os commands, like rmdir, mkdir, cd, ls/dir..
 
-
 ## To Do
-    - [] rewrite the garbage code...
+    - [*] rewrite the garbage code...
     - [*] restructure the project...
     - [] document the project in this README...
     - [] remove what is important and leave what is irrelevent..

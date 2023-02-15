@@ -1,4 +1,6 @@
 
+# /* THIS ENCODER IS OLD! */
+
 from base64 import (b64encode, b64decode, b32encode, b32decode, b16encode, b16decode, b85encode, b85decode)
 from os import path
 from sys import argv, exit

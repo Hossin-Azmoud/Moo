@@ -1,4 +1,4 @@
-
+# /* OLD CUSTOM DB */
 doc = """
 
 GET functionality:
@@ -42,16 +42,16 @@ if not path.exists(user):
 	mkdir(user)
 
 AvailableColors = [
-'BLACK', 'BLUE',
-'CYAN', 'GREEN',
-'LIGHTBLACK_EX', 
-'LIGHTBLUE_EX', 'LIGHTCYAN_EX',
-'LIGHTGREEN_EX', 
-'LIGHTMAGENTA_EX',
-'LIGHTRED_EX', 'LIGHTWHITE_EX', 
-'LIGHTYELLOW_EX', 'MAGENTA', 
-'RED', 'RESET', 
-'WHITE', 'YELLOW'
+	'BLACK', 'BLUE',
+	'CYAN', 'GREEN',
+	'LIGHTBLACK_EX', 
+	'LIGHTBLUE_EX', 'LIGHTCYAN_EX',
+	'LIGHTGREEN_EX', 
+	'LIGHTMAGENTA_EX',
+	'LIGHTRED_EX', 'LIGHTWHITE_EX', 
+	'LIGHTYELLOW_EX', 'MAGENTA', 
+	'RED', 'RESET', 
+	'WHITE', 'YELLOW'
 ]
 
 YELLOW = Fore.YELLOW
