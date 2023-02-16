@@ -15,10 +15,10 @@ class Encoder:
         self.string = None
         self.EncodeFile = False
         self.available = {
-        "BASE64": [b64encode, b64decode],
-        "BASE32": [b32encode, b32decode],
-        "BASE16": [b16encode, b16decode],
-        "BASE85": [b85encode, b85decode]
+            "BASE64": [b64encode, b64decode],
+            "BASE32": [b32encode, b32decode],
+            "BASE16": [b16encode, b16decode],
+            "BASE85": [b85encode, b85decode]
         }
         self.e, self.d = 0, 1
         try:

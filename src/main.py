@@ -1,11 +1,16 @@
 from mooshell import mooShell
 from UI import UIColors
+from pytube import YouTube
 
-def main2():
+
+
+
+
+def main():
 	shell = mooShell()
 	shell.run()
 
-def main():
+def main3():
 	r = True
 	SPACE = ' '
 	
@@ -44,7 +49,9 @@ def main():
 						if startedQ and not endedQ:
 							tbuff += c
 
-				elif ((c != SPACE) and (not startedQ)) or startedQ:
+				elif (
+					(c != SPACE) and (not startedQ)
+				) or startedQ:
 					tbuff += c
 					if j == len(i) - 1:
 						if tbuff:

@@ -48,6 +48,7 @@ class mooShell:
         print(self.UIDocs.INTRO)
 
     def setEnvAttributes(self):
+        
         self.UIDocs = UIDocs
         self.osClass = OS(self)
         self.neTools = NetToolClass(self)
@@ -70,9 +71,11 @@ class mooShell:
             "MV": self.osClass.mv,
             "CAT": self.osClass.cat,
             "NET": self.neTools.NetExec,
+            "YD": self.neTools.YoutubeDownloader,
             "PACKAGEI": self.Tools.package_info,
             "FONTS": self.Tools.DownloadFonts,
-            "SERVE": NOT_EMP,
+            "SERVE": self.neTools.NetServer,
+            "AUDIONIFY": NOT_EMP,
             "HASH": self.Encryptor.hashVal,
             "DECODE": self.Encryptor.Decode,
             "ENCODE": self.Encryptor.Encode,
@@ -87,7 +90,12 @@ class mooShell:
         self.SUC = UIColors.GREEN
         self.RUN = True
 
-    def SetCwd(self, new: str) -> None: self.cwd = new
+    def SetCwd(self, new: str) -> None: 
+        if path.exists(new): 
+            self.cwd = new
+            return True
+        return False
+
     def LogDict(self, data: dict) -> None:
         for i, k in enumerate(data):
             if k == "content":
@@ -106,6 +114,10 @@ class mooShell:
         self.setEnvAttributes()
         self.PMap["CD"](ROOT)
         self.SetCwd(ROOT)
+
+    def GetInput(self, prompt):
+        buff = input(f"{self.UIColors.LIGHTYELLOW_EX}{prompt}{self.UIColors.LIGHTYELLOW_EX}")
+        return buff
 
     def run(self):
         """ THE ENTRY POINT FOR THE PROGRAM. """
