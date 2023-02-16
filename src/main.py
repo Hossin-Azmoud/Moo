@@ -9,6 +9,7 @@ from pytube import YouTube
 def main():
 	shell = mooShell()
 	shell.run()
+	print(UIColors.WHITE)
 
 def main3():
 	r = True
@@ -64,8 +65,7 @@ def main3():
 					tbuff = ''
 
 		print(buff)
-		
-
-if __name__ == '__main__':
-	main()
-	print(UIColors.WHITE)
+	
+(
+	lambda : main() if (__name__ == '__main__') else None
+)()

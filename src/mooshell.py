@@ -76,6 +76,7 @@ class mooShell:
             "FONTS": self.Tools.DownloadFonts,
             "SERVE": self.neTools.NetServer,
             "AUDIONIFY": NOT_EMP,
+            "SS": self.neTools.SecureShellTool,
             "HASH": self.Encryptor.hashVal,
             "DECODE": self.Encryptor.Decode,
             "ENCODE": self.Encryptor.Encode,
@@ -125,18 +126,22 @@ class mooShell:
             self.program = GetShellInput(self.cwd)
             self.processProgram()
     
-    def processProgram(self):
+    def processProgram(self, External = False, ExtProgram = None):
         """ A func to parse and process the program name and args. """
-        
-        PName = self.program.ProgramName.upper().strip()
-        
-        if PName:
-            if PName in self.PMap:
-                code = self.PMap[PName]
-                self.program.ExecuteProgram(code)
-                return
+        if not ExtProgram: 
+            PName = self.program.ProgramName.upper().strip()
+            
+            if PName:
+                if PName in self.PMap:
+                    code = self.PMap[PName]
+                    self.program.ExecuteProgram(code)
+                    return
 
-            self.osClass.ExecuteSysCommand(self.program)
+                self.osClass.ExecuteSysCommand(self.program)
+            return
+            
+    def cmd(self, cmd):
+        return ("0")
 
     def appendToFile(self, fileName, content):
         with open(fileName, "a+") as f:

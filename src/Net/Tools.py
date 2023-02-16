@@ -13,7 +13,234 @@ import socketserver
 import socket
 from time import time
 from os import path
+from subprocess import run
+from json import dumps, loads
+from datetime import datetime
+from hashlib import sha256
+from threading import Thread
+@dataclass
+class SecureShellClient:
+	def __init__(self, host, interface, port, ClientName="client"):
+		
+		if port:
+			self.PORT: int = port
+		else:
+			self.PORT: int = 4500
 
+		self.HOST: str = host
+		self.USERNAME: str = ClientName
+		self.interface = interface
+		self.SOCKET: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.HEADER: int = 128
+		self.DISCONNECTING: str = "!DISCONNECT"
+		self.FORMAT: str = "utf-8"
+		self.logged_in = False
+
+	def initialize(self):
+		
+		while not self.logged_in:
+			clientName = self.interface.GetInput("User: ")
+			Password   = self.interface.GetInput("password: ")
+			
+			if clientName and Password:
+				
+				msg = dumps({
+					'user': clientName,
+					'ConnectedAt': str(datetime.now()),
+					'pwd': Password
+				})
+
+				self.send(msg)
+				msg, n = self.receiveMessage()
+				
+				if n > 0:
+					decodedMsg = loads(msg)
+					if decodedMsg["code"] == 200:
+						self.logged_in = True
+					else:
+						self.interface.LogInfo("Could not log in ? check if the password is legit!")
+
+			else:
+				self.interface.LogInfo("Empty value, recheck your username or password!")
+
+	def connect(self):
+		self.interface.LogInfo(f"Connecting to: {self.HOST}:{self.PORT}")
+		self.SOCKET.connect((self.HOST, self.PORT))
+		self.initialize()
+		
+		if self.logged_in:
+			self.StartTransaction()
+
+		self.EndTransaction()
+
+	def EndTransaction(self):
+		self.SOCKET.close()
+
+	def StartTransaction(self):
+		run = True
+		print(f"[!] Secure Shell (client) started {socket.gethostname()}@{self.HOST}:{self.PORT}")
+		
+		while run:
+			msg = self.interface.GetInput(f"{socket.gethostname()}@{self.HOST}: ")
+			
+			if (len(msg) > 0):
+				if msg == "!DISCONNECT": 
+					run = False
+					self.send(dumps({
+						"cmd": "!DISCONNECT"
+					}))
+
+				else:
+					cmd = {
+						"cmd": msg
+					}
+
+					self.send(dumps(cmd))
+					msg, n = self.receiveMessage()
+					
+					if n > 0:
+						Decoded = loads(msg)
+						outPut = Decoded["out"]
+						self.interface.LogInfo(outPut)
+	
+	def receiveMessage(self) -> tuple[str, int]:
+	
+		msg_len = self.SOCKET.recv(self.HEADER).decode(self.FORMAT) # recv the length of the message.
+		print(msg_len)
+		msg_len = int(msg_len)
+		msg = self.SOCKET.recv(msg_len).decode(self.FORMAT) # recv the message.
+		return (msg, msg_len)
+
+	def send(self, msg: str):
+		msg = msg.encode(self.FORMAT)
+		self.SOCKET.send(str(len(msg)).encode(self.FORMAT))
+		self.SOCKET.send(msg)
+		
+
+# client_ = Client()
+# client_.connect()
+# client_.close()
+
+class SecureShell:
+	"""
+		Init message:
+			{
+				'U': clientName,
+				'ConnectedAt': Date.Now(),
+				'pwd': Password
+			}
+		genericMsg:
+			{
+				'cmd': command
+			}
+
+	"""
+
+
+	def __init__(self, interface, pwd, port):
+		self.interface = interface
+		self.pwd = sha256(pwd.encode()).hexdigest()
+		self.ClientName = "Default-Client"
+		if port:
+			self.PORT: int = port
+		else:
+			self.PORT = 4000
+
+		self.HOST: str = socket.gethostbyname(socket.gethostname())
+		self.SOCKET: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.HEADER: int = 128
+		self.FORMAT: str = "utf-8"
+		self.DISCONNECTING: str = "!DISCONNECT"
+		self.clientLoggedIn = False
+
+
+	def SetClient(self, NewC) -> None: 
+		if NewC: self.ClientName = NewC
+
+	def authenticate(self, conn) -> None:
+	
+		while not self.clientLoggedIn:	
+			
+			msg, n = self.receiveMessage(conn)
+			
+			if n > 0:
+				decodedMsg = loads(msg)
+				
+				if sha256(decodedMsg["pwd"].encode()).hexdigest() == self.pwd:
+					self.clientLoggedIn = True
+					self.SetClient(decodedMsg["user"])
+					self.send(dumps({
+						"code": 200
+					}), conn)
+
+				else:
+					self.send(dumps({
+						"code": 400
+					}), conn)
+
+			else:
+				self.send(dumps({
+					"code": 400
+				}), conn)
+
+	def connect(self, conn, address):
+		connected = True
+		# Login!
+		self.authenticate(conn)
+
+		if self.clientLoggedIn:
+			
+			while connected:
+				m, n = self.receiveMessage(conn)
+				decoded = loads(m)
+				if n > 0:
+					if decoded["cmd"] == "!DISCONNECT":
+						connected = False
+					else:
+						# TODO: Make a handler for the commands comming from the network.
+						self.execute(decoded["cmd"], conn)
+
+	def receiveMessage(self, conn):
+		msg_len = conn.recv(self.HEADER).decode(self.FORMAT)
+		msg_len = int(msg_len)
+		data = conn.recv(msg_len).decode(self.FORMAT)
+		return (
+			data, msg_len
+		)
+
+	def execute(self, command, conn) -> None:
+		try:
+			out = run(command, shell=True, stdin=PIPE, stdout=PIPE).stdout
+			conn.send(str(len(out)).encode(self.FORMAT))
+			conn.send(out)
+		except:
+			conn.send('1'.encode(self.FORMAT))
+			conn.send(" ".encode(self.FORMAT))
+
+	def startSecureShell(self):
+		self.bind_()
+		self.SOCKET.listen(10)
+		print(f"[!] Secure Shell (server) started {socket.gethostname()}@{self.HOST}:{self.PORT}")
+
+		while True:
+			conn, address = self.SOCKET.accept()
+			Thread_ = Thread(target=self.connect, args=(conn, address))
+			Thread_.start()
+
+		self.endSecureShell()
+
+
+
+	def send(self, msg: str, conn):
+		msg = msg.encode(self.FORMAT)
+		conn.send(str(len(msg)).encode(self.FORMAT))
+		conn.send(msg)
+
+	def bind_(self):
+		self.SOCKET.bind((self.HOST, self.PORT))
+
+	def endSecureShell(self):
+		self.SOCKET.close()
 
 @dataclass
 class YTVideosWrapper:
@@ -221,10 +448,12 @@ CommandLine Tool to serve a directory (DEFAULT IS CWD).
 
 """)
 
+
 class NetToolClass:
 	
-	def __init__(self, interface): self.interface = interface
-
+	def __init__(self, interface): 
+		self.interface = interface
+		
 	def NetExec(self, *args, **kwargs):
 		
 		if len(args) > 0:
@@ -238,6 +467,50 @@ class NetToolClass:
 		NewServer = Server(self.interface)
 		NewServer.gather_params(*args)
 		NewServer.serve()
+	
+	def SecureShellTool(self, *args):
+		if len(args) > 0:
+			if len(args) == 1:
+				farg = args[0]
+				if (farg.upper().strip() == "-H") and (farg.upper().strip() == "--HELP"):
+					self.interface.LogInfo("""
+
+Tool to open a secure connexion.
+[USAGE] ss [client|server] [Port:int] [Host: str]
+
+""")
+					return
+			else:
+
+				Rule = args[0]
+				Host = None
+				Port = None
+
+				
+				if len(args) >= 2: Port = int(args[1])
+				
+				if Rule.upper().strip() == "CLIENT": 
+					if len(args) < 3:
+						self.interface.LogError("A Host was never specified!")
+						return
+
+					Host = args[2]
+
+				if Rule.upper().strip() == "CLIENT": 
+					shell = SecureShellClient(Host, self.interface, Port)
+					shell.connect()
+
+				if Rule.upper().strip() == "SERVER": 
+					pwd = self.interface.GetInput("password: ")
+					shell = SecureShell(self.interface, pwd, Port)
+					shell.startSecureShell()
+		else:
+			self.interface.LogInfo("""
+
+Tool to open a secure connexion.
+[USAGE] ss [client|server] [Port:int] [Host: str]
+
+""")
 
 	def YoutubeDownloader(self, *args):
 		"""
@@ -278,6 +551,7 @@ class NetToolClass:
 		"""
 		if len(args) > 0:
 			# if "-f" in args:
+			
 			farg = args[0]
 			if (farg.upper().strip() == "--HELP") or (farg.upper().strip() == "-H"):
 				self.printYDHelp()

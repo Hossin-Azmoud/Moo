@@ -1,6 +1,7 @@
 from .EncodingApi import EncodingManager, ENCODE, DECODE # EncodingManager(Func: callable, s: str | bytes, Op: int)
 from .HashingApi import Hasher # Hasher(HashingFunc: callable, s: str | bytes) -> str:
 from binascii import hexlify, unhexlify
+
 from hashlib import (
 	blake2b,
 	blake2s,

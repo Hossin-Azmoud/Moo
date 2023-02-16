@@ -6,8 +6,9 @@ class Program:
 	Argv: list[str]
 	ProgramName: str
 
+	
 	def ExecuteProgram(self, Code: callable) -> None: Code(*self.Argv)
-
+	def SpitProgramResult(self, Code: callable): return Code(*self.Argv)
 
 def  constructNewProgram(input_: str) -> Program:
 
